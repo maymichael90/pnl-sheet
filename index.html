@@ -271,12 +271,12 @@
       </div>
       <div class="bbody">
         <div class="frow">
-          <label class="flabel">Meta / Facebook ads<span class="fhint">Vooringevuld door adviseur</span></label>
-          <div id="fb_display"><input type="number" id="m_fb" placeholder="€ 0" min="0"></div>
+          <label class="flabel">Meta / Facebook ads<span class="fhint">Automatisch berekend — gewogen gemiddeld</span></label>
+          <div id="fb_display"><input type="number" id="m_fb" placeholder="€ 0" min="0" style="background:var(--bg2);color:var(--text2)" readonly></div>
         </div>
         <div class="frow">
-          <label class="flabel">Google ads<span class="fhint">Vooringevuld door adviseur</span></label>
-          <div id="google_display"><input type="number" id="m_google" placeholder="€ 0" min="0"></div>
+          <label class="flabel">Google ads<span class="fhint">Automatisch berekend — gewogen gemiddeld</span></label>
+          <div id="google_display"><input type="number" id="m_google" placeholder="€ 0" min="0" style="background:var(--bg2);color:var(--text2)" readonly></div>
         </div>
         <div class="frow"><label class="flabel">Marketing bureau / agency</label><input type="number" id="m_bureau" placeholder="€ 0" min="0"></div>
         <div class="frow"><label class="flabel">Influencers & samenwerkingen</label><input type="number" id="m_influencer" placeholder="€ 0" min="0"></div>
@@ -470,10 +470,55 @@ function updateRoasAverages() {
   </div>`).join('');
   window._fb_data = fb;
   window._goog_data = goog;
+  // Sync weighted avg spend → marketing input fields
+  const fbEl = document.getElementById('m_fb');
+  const gEl = document.getElementById('m_google');
+  if (fbEl && !fbEl.readOnly && fb.w_spend > 0) fbEl.value = Math.round(fb.w_spend);
+  if (gEl && !gEl.readOnly && goog.w_spend > 0) gEl.value = Math.round(goog.w_spend);
 }
+
+
+const PREFILL = {
+  fb: {
+    spend: [6551, 5457, 6395, 4933, 3898, 5879, 3498, 3796, 0, 0, 0, 0],
+    roas:  [1.43, 2.29, 2.35, 2.25, 1.53, 1.49, 2.31, 0.36, 0, 0, 0, 0]
+  },
+  goog: {
+    spend: [6155, 5484, 4161, 4532, 6108, 9223, 5149, 4132, 5576, 6612, 5850, 4586],
+    roas:  [8.54, 6.07, 7.74, 5.46, 6.28, 4.83, 4.02, 3.99, 7.04, 6.09, 4.42, 3.40]
+  }
+};
 
 buildRoasTable('metaYearTable', 'fb');
 buildRoasTable('googleYearTable', 'goog');
+
+// Fill in the prefilled data
+function prefillRoasTables() {
+  ['fb','goog'].forEach(p => {
+    PREFILL[p].spend.forEach((v, i) => {
+      const el = document.getElementById(`${p}_spend_${i}`);
+      if (el && v > 0) el.value = v;
+    });
+    PREFILL[p].roas.forEach((v, i) => {
+      const el = document.getElementById(`${p}_roas_${i}`);
+      if (el && v > 0) el.value = v;
+    });
+  });
+  syncMarketingFields();
+  updateRoasAverages();
+}
+
+// Sync weighted avg spend → m_fb / m_google fields
+function syncMarketingFields() {
+  const fb = getRoasData('fb');
+  const goog = getRoasData('goog');
+  const fbEl = document.getElementById('m_fb');
+  const gEl = document.getElementById('m_google');
+  if (fbEl && fb.w_spend > 0) fbEl.value = Math.round(fb.w_spend);
+  if (gEl && goog.w_spend > 0) gEl.value = Math.round(goog.w_spend);
+  window._fb_data = fb;
+  window._goog_data = goog;
+}
 
 const PIN = '2025';
 
@@ -484,6 +529,7 @@ function checkPin() {
     document.getElementById('pinInput').style.display = 'none';
     document.querySelector('.advisor-bar .pin-row .btn').style.display = 'none';
     document.getElementById('pinError').style.display = 'none';
+    prefillRoasTables();
     loadFromUrl();
   } else {
     document.getElementById('pinError').style.display = 'inline';
