@@ -138,7 +138,11 @@
   .info-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
   .info-lbl { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
 
-  @media (max-width: 480px) {
+  .cost-explain { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .cost-explain-item { background: var(--bg2); border-radius: var(--radius); padding: 10px 12px; border-left: 3px solid var(--border2); }
+  .cost-explain-title { font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+  .cost-explain-text { font-size: 11.5px; color: var(--text2); line-height: 1.55; }
+  @media (max-width: 520px) { .cost-explain { grid-template-columns: 1fr; } }
     .kpi-grid-3 { grid-template-columns: 1fr 1fr; }
     .advisor-grid { grid-template-columns: 1fr; }
     .roas-table-head, .roas-table-row { grid-template-columns: 1fr 70px 90px; }
@@ -154,7 +158,7 @@
   <!-- PAGE 1: CLIENT INTAKE -->
   <div class="page active" id="p1">
     <h1>P&L intake — vertrouwelijk</h1>
-    <p class="sub">Vul jouw werkelijke cijfers in. Absolute bedragen blijven uitsluitend op jouw scherm. De adviseur ontvangt alleen percentages en targets.</p>
+    <p class="sub">Vul jouw werkelijke cijfers in <strong>per maand</strong>. Absolute bedragen blijven uitsluitend op jouw scherm. De adviseur ontvangt alleen percentages en targets.</p>
 
     <!-- ADVISOR SECTION -->
     <div class="advisor-bar" id="advisorBar">
@@ -193,7 +197,7 @@
     <!-- OMZET OFFLINE -->
     <div class="block">
       <div class="bhead" onclick="tog(this)">
-        <div class="bhead-left"><span class="btitle">Omzet — offline</span><span class="bbadge">Inkomsten</span></div><span class="barr">▾</span>
+        <div class="bhead-left"><span class="btitle">Omzet — offline</span><span class="bbadge">per maand</span></div><span class="barr">▾</span>
       </div>
       <div class="bbody">
         <div class="frow"><label class="flabel">Kaartverkoop (loket)</label><input type="number" id="omz_kaart" placeholder="€ 0" min="0"></div>
@@ -207,7 +211,7 @@
     <!-- OMZET ONLINE -->
     <div class="block">
       <div class="bhead" onclick="tog(this)">
-        <div class="bhead-left"><span class="btitle">Omzet — online</span><span class="bbadge">Inkomsten</span></div><span class="barr">▾</span>
+        <div class="bhead-left"><span class="btitle">Omzet — online</span><span class="bbadge">per maand</span></div><span class="barr">▾</span>
       </div>
       <div class="bbody">
         <div class="frow"><label class="flabel">Online kaartverkoop<span class="fhint">Pre-boekingen via website / app</span></label><input type="number" id="omz_online_kaart" placeholder="€ 0" min="0"></div>
@@ -219,28 +223,34 @@
     <!-- KOSTEN -->
     <div class="block">
       <div class="bhead" onclick="tog(this)">
-        <div class="bhead-left"><span class="btitle">Kostenstructuur</span><span class="bbadge">Kosten</span></div><span class="barr">▾</span>
+        <div class="bhead-left"><span class="btitle">Kostenstructuur (schatting)</span><span class="bbadge">per maand</span></div><span class="barr">▾</span>
       </div>
       <div class="bbody">
-        <div class="glabel">Directe / variabele kosten</div>
-        <div class="frow"><label class="flabel">Vloerpersoneel / uurloon</label><input type="number" id="k_personeel" placeholder="€ 0" min="0"></div>
-        <div class="frow"><label class="flabel">Inkoop & verbruiksartikelen</label><input type="number" id="k_inkoop" placeholder="€ 0" min="0"></div>
-        <div class="frow"><label class="flabel">Onderhoud & reparaties</label><input type="number" id="k_onderhoud" placeholder="€ 0" min="0"></div>
-        <div class="divider"></div>
-        <div class="glabel">Vaste kosten</div>
-        <div class="frow"><label class="flabel">Huur<span class="opt">gevoelig</span></label><input type="number" id="k_huur" placeholder="€ 0" min="0"></div>
-        <div class="frow"><label class="flabel">Energie & nutsvoorzieningen</label><input type="number" id="k_energie" placeholder="€ 0" min="0"></div>
-        <div class="frow"><label class="flabel">Verzekeringen</label><input type="number" id="k_verzek" placeholder="€ 0" min="0"></div>
-        <div class="frow"><label class="flabel">Management & vaste salarissen<span class="opt">gevoelig</span></label><input type="number" id="k_mgmt" placeholder="€ 0" min="0"></div>
-        <div class="frow"><label class="flabel">Software & tools</label><input type="number" id="k_software" placeholder="€ 0" min="0"></div>
-        <div class="frow"><label class="flabel">Overige vaste kosten</label><input type="number" id="k_overig" placeholder="€ 0" min="0"></div>
+        <div class="cost-explain">
+          <div class="cost-explain-item">
+            <div class="cost-explain-title">Variabele kosten</div>
+            <div class="cost-explain-text">Kosten die meeschalen met het aantal bezoekers. Als de deuren dichtgaan, betaal je dit niet. Denk aan: vloerpersoneel (uurloon), inkoop F&B, verbruiksartikelen, schoonmaak per shift. Een schatting is prima.</div>
+          </div>
+          <div class="cost-explain-item">
+            <div class="cost-explain-title">Vaste kosten</div>
+            <div class="cost-explain-text">Kosten die elke maand hetzelfde zijn, ongeacht drukte. Denk aan: huur, vaste salarissen, verzekeringen, energie, software & tools. Dit is je minimale maandlast — ook bij nul bezoekers.</div>
+          </div>
+        </div>
+        <div class="frow" style="margin-top:4px">
+          <label class="flabel">Totale variabele kosten<span class="fhint">Schatting totaal per maand</span></label>
+          <input type="number" id="k_variabel" placeholder="€ 0" min="0">
+        </div>
+        <div class="frow">
+          <label class="flabel">Totale vaste kosten<span class="fhint">Schatting totaal per maand</span></label>
+          <input type="number" id="k_vast_totaal" placeholder="€ 0" min="0">
+        </div>
       </div>
     </div>
 
     <!-- MARKETING -->
     <div class="block">
       <div class="bhead" onclick="tog(this)">
-        <div class="bhead-left"><span class="btitle">Marketing uitgaven</span><span class="bbadge">Marketing</span></div><span class="barr">▾</span>
+        <div class="bhead-left"><span class="btitle">Marketing uitgaven</span><span class="bbadge">per maand</span></div><span class="barr">▾</span>
       </div>
       <div class="bbody">
         <div class="frow">
@@ -272,6 +282,18 @@
         <div class="divider"></div>
         <div class="frow"><label class="flabel">Maximale maandcapaciteit<span class="fhint">Openingsuren × max. gelijktijdig</span></label><input type="number" id="max_cap" placeholder="0" min="0"></div>
         <div class="frow"><label class="flabel">Gewenste groei 2026 (%)<span class="fhint">t.o.v. huidig gemiddelde</span></label><input type="number" id="groei_pct" placeholder="bv. 20" min="0"></div>
+      </div>
+    </div>
+
+    <!-- LTV / CAC -->
+    <div class="block">
+      <div class="bhead" onclick="tog(this)">
+        <div class="bhead-left"><span class="btitle">Klantwaarde — LTV & CAC</span><span class="bbadge">Uit boekingssysteem</span></div><span class="barr">▾</span>
+      </div>
+      <div class="bbody">
+        <div class="frow"><label class="flabel">% nieuwe bezoekers per maand<span class="fhint">Uit je boekingsdata — bv. 60%</span></label><input type="number" id="ltv_new_pct" placeholder="bv. 60" min="0" max="100"></div>
+        <div class="frow"><label class="flabel">Gemiddelde bezoekfrequentie per jaar<span class="fhint">Hoe vaak komt een klant terug? bv. 3x</span></label><input type="number" id="ltv_freq" placeholder="bv. 3" min="0" step="0.1"></div>
+        <div class="frow"><label class="flabel">Gemiddeld aantal actieve jaren<span class="fhint">Hoe lang blijft iemand klant? bv. 4 jaar</span></label><input type="number" id="ltv_jaren" placeholder="bv. 4" min="0" step="0.5"></div>
       </div>
     </div>
 
@@ -323,9 +345,16 @@
       <div class="kpi-grid-2" id="groeiKpis"></div>
     </div>
 
+    <div class="section-box" id="ltvSection" style="display:none">
+      <h2>Klantwaarde — LTV & CAC</h2>
+      <div class="section-sub" id="ltvSub">Lifetime value versus acquisitiekosten.</div>
+      <div class="kpi-grid-2" id="ltvKpis"></div>
+      <div class="note" id="ltvNote"></div>
+    </div>
+
     <div class="email-block">
       <div class="email-lbl">E-mailadres adviseur</div>
-      <input type="email" id="email_naar" placeholder="adviseur@email.nl" style="margin-bottom:10px">
+      <input type="email" id="email_naar" value="michael@maydium.nl" style="margin-bottom:10px">
       <div class="email-lbl" style="margin-top:8px">Wat de adviseur ontvangt — alleen percentages & targets</div>
       <div class="report-preview" id="reportPreview"></div>
     </div>
@@ -444,8 +473,8 @@ function berekenEnToon() {
   const omz_on = gv('omz_online_kaart') + gv('omz_online_party') + gv('omz_online_overig');
   const omz = omz_off + omz_on;
 
-  const k_dir = gv('k_personeel') + gv('k_inkoop') + gv('k_onderhoud');
-  const k_vast = gv('k_huur') + gv('k_energie') + gv('k_verzek') + gv('k_mgmt') + gv('k_software') + gv('k_overig');
+  const k_dir = gv('k_variabel');
+  const k_vast = gv('k_vast_totaal');
 
   // Marketing — use locked values from URL or input fields
   const mkt_fb = gv('m_fb');
@@ -583,6 +612,39 @@ function berekenEnToon() {
     { l: 'Bezoekersdoel 2026', v: bez_doel > 0 ? fk(bez_doel) : '–', s: groei_pct > 0 ? `+${groei_pct}% groei` : 'Vul groeidoel in', cl: 'b' },
   ].map(c => `<div class="kc ${c.cl}"><div class="kl">${c.l}</div><div class="kv">${c.v}</div><div class="ks">${c.s}</div></div>`).join('');
 
+  // LTV / CAC
+  const ltv_new_pct = gv('ltv_new_pct');
+  const ltv_freq = gv('ltv_freq');
+  const ltv_jaren = gv('ltv_jaren');
+  const nieuwe_bez = gem_bez > 0 && ltv_new_pct > 0 ? Math.round(gem_bez * (ltv_new_pct / 100)) : 0;
+  const ltv = rpv > 0 && ltv_freq > 0 && ltv_jaren > 0 ? rpv * ltv_freq * ltv_jaren : 0;
+  const cac = nieuwe_bez > 0 ? mkt_totaal / nieuwe_bez : 0;
+  const cac_paid = nieuwe_bez > 0 ? mkt_paid / nieuwe_bez : 0;
+  const ltv_cac_ratio = cac > 0 && ltv > 0 ? ltv / cac : 0;
+
+  const ltvSection = document.getElementById('ltvSection');
+  ltvSection.style.display = (ltv > 0 || cac > 0) ? 'block' : 'none';
+  if (ltvSection.style.display !== 'none') {
+    document.getElementById('ltvSub').textContent = ltv_freq > 0 && ltv_jaren > 0
+      ? `${ltv_freq}x per jaar × ${ltv_jaren} jaar × ${fe2(rpv)} per bezoek`
+      : 'Vul frequentie en jaren in voor de LTV.';
+    const ratio_cl = ltv_cac_ratio >= 3 ? 'g' : ltv_cac_ratio >= 1 ? 'a' : 'r';
+    const ratio_label = ltv_cac_ratio >= 3 ? 'Gezond (>3x)' : ltv_cac_ratio >= 1 ? 'Matig (1–3x)' : ltv_cac_ratio > 0 ? 'Gevaarlijk (<1x)' : '–';
+    document.getElementById('ltvKpis').innerHTML = [
+      { l: 'Lifetime value (LTV)', v: ltv > 0 ? fe(ltv) : '–', s: `${ltv_freq}x/jaar × ${ltv_jaren} jr`, cl: 'b' },
+      { l: 'CAC (alle marketing)', v: cac > 0 ? fe2(cac) : '–', s: nieuwe_bez > 0 ? `${fk(nieuwe_bez)} nieuwe bez./mnd` : 'Vul % nieuw in', cl: '' },
+      { l: 'CAC (alleen paid)', v: cac_paid > 0 ? fe2(cac_paid) : '–', s: 'FB + Google per nieuwe klant', cl: '' },
+      { l: 'LTV:CAC ratio', v: ltv_cac_ratio > 0 ? fr(ltv_cac_ratio) : '–', s: ratio_label, cl: ratio_cl },
+    ].map(c => `<div class="kc ${c.cl}"><div class="kl">${c.l}</div><div class="kv">${c.v}</div><div class="ks">${c.s}</div></div>`).join('');
+
+    let ltvOordeel = '';
+    if (ltv_cac_ratio >= 3) ltvOordeel = `LTV:CAC van ${fr(ltv_cac_ratio)} — elke euro acquisitiekosten levert ${fr(ltv_cac_ratio)} terug over de klantlevensduur. Schaal gerust op.`;
+    else if (ltv_cac_ratio >= 1) ltvOordeel = `LTV:CAC van ${fr(ltv_cac_ratio)} — je verdient acquisitiekosten terug, maar de marge is krap. Stuur op hogere bezoekfrequentie of lagere CAC.`;
+    else if (ltv_cac_ratio > 0) ltvOordeel = `LTV:CAC van ${fr(ltv_cac_ratio)} — gevaarlijk. Je geeft meer uit aan het binnenhalen van een klant dan die klant ooit oplevert. Stop met schalen totdat dit boven 1x zit.`;
+    else ltvOordeel = 'Vul bezoekfrequentie, actieve jaren én % nieuwe bezoekers in voor de LTV:CAC berekening.';
+    document.getElementById('ltvNote').textContent = ltvOordeel;
+  }
+
   // Report
   const rapport = [
     `P&L RAPPORT — ${bedrijf.toUpperCase()}`,
@@ -627,6 +689,16 @@ function berekenEnToon() {
       `  Doelstelling (+${groei_pct}%)          ${bez_doel > 0 ? fk(bez_doel) : '–'}`,
       `  Bezettingsgraad              ${bezetting > 0 ? bezetting.toFixed(0) + '%' : '–'}`,
     ].join('\n') : `GROEI 2026                     niet ingevuld`,
+    ``,
+    ltv > 0 || cac > 0 ? [`KLANTWAARDE — LTV & CAC`,
+      `  Lifetime value (LTV)         ${ltv > 0 ? fe(ltv) : '–'}`,
+      `  CAC (alle marketing)         ${cac > 0 ? fe2(cac) : '–'}`,
+      `  CAC (alleen paid)            ${cac_paid > 0 ? fe2(cac_paid) : '–'}`,
+      `  LTV:CAC ratio                ${ltv_cac_ratio > 0 ? fr(ltv_cac_ratio) : '–'}  →  ${ltv_cac_ratio >= 3 ? 'GEZOND' : ltv_cac_ratio >= 1 ? 'MATIG' : ltv_cac_ratio > 0 ? 'GEVAARLIJK' : '–'}`,
+      `  % nieuwe bezoekers           ${ltv_new_pct > 0 ? ltv_new_pct + '%' : '–'}`,
+      `  Bezoekfrequentie             ${ltv_freq > 0 ? ltv_freq + 'x/jaar' : '–'}`,
+      `  Actieve jaren                ${ltv_jaren > 0 ? ltv_jaren + ' jaar' : '–'}`,
+    ].join('\n') : `LTV & CAC                      niet ingevuld`,
     ``,
     `Absolute bedragen (€) niet bijgevoegd.`,
     `${'─'.repeat(46)}`,
