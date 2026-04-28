@@ -370,15 +370,16 @@
     </div>
 
     <div class="email-block">
-      <div class="email-lbl">E-mailadres adviseur</div>
-      <input type="email" id="email_naar" value="michael@maydium.nl" style="margin-bottom:10px">
+      <div class="email-lbl">Rapport wordt verstuurd naar michael@maydium.nl</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.5">Jouw absolute bedragen worden niet meegestuurd — alleen percentages en targets.</div>
       <div class="email-lbl" style="margin-top:8px">Wat de adviseur ontvangt — alleen percentages & targets</div>
       <div class="report-preview" id="reportPreview"></div>
+      <div id="sendStatus" style="display:none;margin-top:10px;font-size:13px;padding:10px 12px;border-radius:8px"></div>
     </div>
 
     <div class="btn-row">
       <button class="btn" onclick="goPage(1)">← Aanpassen</button>
-      <button class="btn btn-g" onclick="stuurEmail()">Verstuur via Gmail ↗</button>
+      <button class="btn btn-g" id="sendBtn" onclick="stuurEmail()">Verstuur rapport naar adviseur →</button>
     </div>
   </div>
 
@@ -885,12 +886,47 @@ function berekenEnToon() {
   goPage(2);
 }
 
-function stuurEmail() {
-  const naar = document.getElementById('email_naar').value.trim();
-  if (!naar) { alert('Vul eerst het e-mailadres van de adviseur in.'); return; }
-  const sub = encodeURIComponent(`P&L rapport — ${window._bedrijf} — ${window._periode}`);
-  const body = encodeURIComponent(window._rapport);
-  window.open(`https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(naar)}&su=${sub}&body=${body}`, '_blank');
+async function stuurEmail() {
+  const btn = document.getElementById('sendBtn');
+  const status = document.getElementById('sendStatus');
+
+  btn.disabled = true;
+  btn.textContent = 'Versturen...';
+  status.style.display = 'none';
+
+  try {
+    const response = await fetch('/api/send-report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        bedrijf: window._bedrijf || '',
+        periode: window._periode || '',
+        rapport: window._rapport || '',
+      }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.success) {
+      status.style.display = 'block';
+      status.style.background = 'var(--green-bg)';
+      status.style.color = 'var(--green-text)';
+      status.style.border = '1px solid #C0DD97';
+      status.textContent = 'Rapport verstuurd naar michael@maydium.nl';
+      btn.textContent = 'Verstuurd ✓';
+      btn.style.background = '#1a7340';
+    } else {
+      throw new Error(data.error || 'Onbekende fout');
+    }
+  } catch (err) {
+    status.style.display = 'block';
+    status.style.background = 'var(--red-bg)';
+    status.style.color = 'var(--red-text)';
+    status.style.border = '1px solid #F09595';
+    status.textContent = `Versturen mislukt: ${err.message}`;
+    btn.disabled = false;
+    btn.textContent = 'Probeer opnieuw →';
+  }
 }
 
 goPage(1);
