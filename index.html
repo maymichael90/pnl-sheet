@@ -883,6 +883,56 @@ function berekenEnToon() {
   window._rapport = rapport;
   window._bedrijf = bedrijf;
   window._periode = periode;
+  window._emailData = {
+    bedrijf, periode,
+    omzetmix: { offline: fp(100 - online_pct), online: fp(online_pct) },
+    waterval: [
+      { l: 'Omzet', v: '+100%', kleur: '#185FA5', bold: true },
+      { l: 'Directe kosten', v: '-' + fp(dir_pct), kleur: '#E24B4A' },
+      { l: 'Bruto marge', v: (bruto_marge >= 0 ? '+' : '') + fp(bruto_marge), kleur: bruto_marge >= 0 ? '#1D9E75' : '#E24B4A', bold: true },
+      { l: 'Vaste kosten', v: '-' + fp(vast_pct), kleur: '#E24B4A' },
+      { l: 'Marketing', v: '-' + fp(mkt_pct), kleur: '#BA7517' },
+      { l: 'Netto marge', v: (netto_marge >= 0 ? '+' : '') + fp(netto_marge), kleur: netto_marge >= 0 ? '#3B6D11' : '#E24B4A', bold: true },
+    ],
+    breakeven: {
+      be_bezoekers, gem_bez, be_bereikt,
+      rpv: rpv > 0 ? fe2(rpv) : '–',
+    },
+    cpv: {
+      max_bruto: max_cpv_bruto > 0 ? fe2(max_cpv_bruto) : '–',
+      max_netto: max_cpv_netto > 0 ? fe2(max_cpv_netto) : '–',
+      huidig: huidig_cpv > 0 ? fe2(huidig_cpv) : '–',
+      huidig_paid: huidig_cpv_paid > 0 ? fe2(huidig_cpv_paid) : '–',
+      status: huidig_cpv > 0 && max_cpv_netto > 0 ? (huidig_cpv <= max_cpv_netto ? 'good' : huidig_cpv <= max_cpv_bruto ? 'warn' : 'bad') : 'none',
+      oordeel: cpvOordeel,
+    },
+    roas: {
+      be_bruto: be_roas_bruto > 0 ? fr(be_roas_bruto) : '–',
+      be_netto: be_roas_netto > 0 ? fr(be_roas_netto) : '–',
+      fb_jaar: window._fb_data?.avg_roas_year > 0 ? fr(window._fb_data.avg_roas_year) : '–',
+      fb_kwartaal: window._fb_data?.avg_roas_q > 0 ? fr(window._fb_data.avg_roas_q) : '–',
+      fb_gewogen: r_fb > 0 ? fr(r_fb) : '–',
+      fb_status: r_fb > 0 ? (r_fb >= be_roas_netto ? 'good' : r_fb >= be_roas_bruto ? 'warn' : 'bad') : 'none',
+      goog_jaar: window._goog_data?.avg_roas_year > 0 ? fr(window._goog_data.avg_roas_year) : '–',
+      goog_kwartaal: window._goog_data?.avg_roas_q > 0 ? fr(window._goog_data.avg_roas_q) : '–',
+      goog_gewogen: r_google > 0 ? fr(r_google) : '–',
+      goog_status: r_google > 0 ? (r_google >= be_roas_netto ? 'good' : r_google >= be_roas_bruto ? 'warn' : 'bad') : 'none',
+    },
+    groei: {
+      gem_bez: gem_bez > 0 ? fk(gem_bez) : '–',
+      bez_doel: bez_doel > 0 ? fk(bez_doel) : '–',
+      groei_pct: groei_pct > 0 ? groei_pct + '%' : '–',
+      bezetting: bezetting > 0 ? bezetting.toFixed(0) + '%' : '–',
+      bez_status: bezetting > 60 ? 'good' : bezetting > 35 ? 'warn' : 'bad',
+    },
+    ltv: ltv > 0 || cac > 0 ? {
+      ltv: ltv > 0 ? fe(ltv) : '–',
+      cac: cac > 0 ? fe2(cac) : '–',
+      cac_paid: cac_paid > 0 ? fe2(cac_paid) : '–',
+      ratio: ltv_cac_ratio > 0 ? fr(ltv_cac_ratio) : '–',
+      ratio_status: ltv_cac_ratio >= 3 ? 'good' : ltv_cac_ratio >= 1 ? 'warn' : 'bad',
+    } : null,
+  };
   goPage(2);
 }
 
@@ -902,6 +952,7 @@ async function stuurEmail() {
         bedrijf: window._bedrijf || '',
         periode: window._periode || '',
         rapport: window._rapport || '',
+        emailData: window._emailData || null,
       }),
     });
 
