@@ -138,7 +138,20 @@
   .info-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
   .info-lbl { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
 
-  .cost-explain { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .roas-input-table { width:100%; border-collapse:collapse; }
+  .roas-input-table th { font-size:11px; font-weight:500; color:var(--blue-text); text-align:left; padding:3px 4px 5px; border-bottom:1px solid #B5D4F4; }
+  .roas-input-table th:not(:first-child) { text-align:right; }
+  .roas-input-table td { padding:3px 4px; border-bottom:1px solid rgba(181,212,244,0.4); vertical-align:middle; }
+  .roas-input-table td:first-child { font-size:12px; color:var(--blue-text); width:90px; }
+  .roas-input-table td.avg-row { font-size:11px; font-weight:500; color:var(--blue-text); }
+  .roas-input-table tr.q-divider td { border-top:1px solid #B5D4F4; padding-top:5px; }
+  .roas-input-table tr.avg-row td { border-top:1px solid #B5D4F4; padding-top:6px; font-weight:500; }
+  .roas-input-table input[type=number] { width:100%; height:28px; border:1px solid #B5D4F4; border-radius:6px; padding:0 6px; font-size:12px; background:white; color:var(--text); text-align:right; font-family:inherit; }
+  .roas-input-table input[type=number]:focus { outline:none; border-color:var(--blue); }
+  .avg-card { background:white; border:1px solid #B5D4F4; border-radius:var(--radius); padding:10px 12px; }
+  .avg-card .avg-title { font-size:11px; color:var(--blue-text); margin-bottom:2px; }
+  .avg-card .avg-val { font-size:16px; font-weight:500; color:var(--blue-text); }
+  .avg-card .avg-sub { font-size:11px; color:var(--blue); margin-top:1px; } grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
   .cost-explain-item { background: var(--bg2); border-radius: var(--radius); padding: 10px 12px; border-left: 3px solid var(--border2); }
   .cost-explain-title { font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
   .cost-explain-text { font-size: 11.5px; color: var(--text2); line-height: 1.55; }
@@ -169,13 +182,17 @@
         <span id="pinError" style="font-size:12px;color:var(--red);display:none">Onjuiste pincode</span>
       </div>
       <div class="advisor-fields" id="advisorFields">
-        <div class="advisor-grid">
-          <div class="af-item"><label>Meta ads spend (€/maand)</label><input type="number" id="a_fb" placeholder="0" min="0" oninput="updateAdvisorLock()"></div>
-          <div class="af-item"><label>Google ads spend (€/maand)</label><input type="number" id="a_google" placeholder="0" min="0" oninput="updateAdvisorLock()"></div>
-          <div class="af-item"><label>Gerealiseerde ROAS Meta</label><input type="number" id="a_roas_fb" placeholder="bv. 3.2" min="0" step="0.1" oninput="updateAdvisorLock()"></div>
-          <div class="af-item"><label>Gerealiseerde ROAS Google</label><input type="number" id="a_roas_google" placeholder="bv. 4.1" min="0" step="0.1" oninput="updateAdvisorLock()"></div>
-        </div>
-        <div class="advisor-note">Deze velden worden vergrendeld zodra je de klantlink genereert. De klant kan ze zien maar niet aanpassen.</div>
+        <div style="font-size:12px;color:var(--blue-text);margin-bottom:10px;line-height:1.5">Vul spend en ROAS in per maand. Gemiddelden worden automatisch berekend en gebruikt in de analyse.</div>
+
+        <div class="advisor-note" style="margin-bottom:8px;font-weight:500">Meta / Facebook — afgelopen jaar</div>
+        <div class="roas-input-table" id="metaYearTable"></div>
+
+        <div class="advisor-note" style="margin:10px 0 8px;font-weight:500">Google Ads — afgelopen jaar</div>
+        <div class="roas-input-table" id="googleYearTable"></div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px" id="roasAverages"></div>
+
+        <div class="advisor-note" style="margin-top:10px">Deze velden worden vergrendeld zodra je de klantlink genereert.</div>
         <div class="share-btn-row">
           <button class="btn btn-sm" onclick="generateShareLink()">Genereer klantlink</button>
           <button class="btn btn-sm" onclick="copyLink()" id="copyBtn" style="display:none">Kopieer link</button>
@@ -368,7 +385,96 @@
 </div>
 
 <script>
-// ─── PIN ───────────────────────────────────────────────────────────
+// ─── ROAS TABLE SETUP ─────────────────────────────────────────────
+const MONTHS = ['Jan','Feb','Mrt','Apr','Mei','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
+const QUARTERS = [0,0,0,1,1,1,2,2,2,3,3,3];
+const Q_LABELS = ['Q1','Q2','Q3','Q4'];
+
+function buildRoasTable(containerId, prefix) {
+  const tbl = document.createElement('table');
+  tbl.className = 'roas-input-table';
+  tbl.innerHTML = `<thead><tr><th>Maand</th><th>Spend (€)</th><th>ROAS</th></tr></thead>`;
+  const tbody = document.createElement('tbody');
+  let lastQ = -1;
+  MONTHS.forEach((m, i) => {
+    const tr = document.createElement('tr');
+    if (QUARTERS[i] !== lastQ && lastQ !== -1) tr.classList.add('q-divider');
+    lastQ = QUARTERS[i];
+    tr.innerHTML = `
+      <td>${m}</td>
+      <td><input type="number" id="${prefix}_spend_${i}" placeholder="0" min="0" step="1" oninput="updateRoasAverages()"></td>
+      <td><input type="number" id="${prefix}_roas_${i}" placeholder="0.0" min="0" step="0.01" oninput="updateRoasAverages()"></td>`;
+    tbody.appendChild(tr);
+  });
+  // Averages row
+  const trAvg = document.createElement('tr');
+  trAvg.className = 'avg-row';
+  trAvg.innerHTML = `<td>Gem.</td><td id="${prefix}_avg_spend" class="avg-row" style="text-align:right;font-size:12px">–</td><td id="${prefix}_avg_roas" class="avg-row" style="text-align:right;font-size:12px">–</td>`;
+  tbody.appendChild(trAvg);
+  tbl.appendChild(tbody);
+  document.getElementById(containerId).appendChild(tbl);
+}
+
+function getRoasData(prefix) {
+  const year = { spend: [], roas: [] };
+  const q = { spend: [], roas: [] };
+  // last quarter = last 3 months with data, or months 9-11 (Q4) as fallback
+  MONTHS.forEach((m, i) => {
+    const s = parseFloat(document.getElementById(`${prefix}_spend_${i}`)?.value) || 0;
+    const r = parseFloat(document.getElementById(`${prefix}_roas_${i}`)?.value) || 0;
+    if (s > 0) { year.spend.push(s); if (r > 0) year.roas.push(r); }
+  });
+  // last quarter: find last 3 consecutive months that have spend
+  let lqMonths = [];
+  for (let i = 11; i >= 0; i--) {
+    const s = parseFloat(document.getElementById(`${prefix}_spend_${i}`)?.value) || 0;
+    if (s > 0) lqMonths.push(i);
+    if (lqMonths.length === 3) break;
+  }
+  lqMonths.forEach(i => {
+    const s = parseFloat(document.getElementById(`${prefix}_spend_${i}`)?.value) || 0;
+    const r = parseFloat(document.getElementById(`${prefix}_roas_${i}`)?.value) || 0;
+    if (s > 0) { q.spend.push(s); if (r > 0) q.roas.push(r); }
+  });
+  const avg_spend_year = year.spend.length > 0 ? year.spend.reduce((a,b)=>a+b,0) / year.spend.length : 0;
+  const avg_roas_year = year.roas.length > 0 ? year.roas.reduce((a,b)=>a+b,0) / year.roas.length : 0;
+  const avg_spend_q = q.spend.length > 0 ? q.spend.reduce((a,b)=>a+b,0) / q.spend.length : 0;
+  const avg_roas_q = q.roas.length > 0 ? q.roas.reduce((a,b)=>a+b,0) / q.roas.length : 0;
+  // weighted average: 40% last year, 60% last quarter (more recent = more weight)
+  const w_spend = avg_spend_q > 0 && avg_spend_year > 0 ? avg_spend_q * 0.6 + avg_spend_year * 0.4 : avg_spend_q || avg_spend_year;
+  const w_roas = avg_roas_q > 0 && avg_roas_year > 0 ? avg_roas_q * 0.6 + avg_roas_year * 0.4 : avg_roas_q || avg_roas_year;
+  return { avg_spend_year, avg_roas_year, avg_spend_q, avg_roas_q, w_spend, w_roas };
+}
+
+function updateRoasAverages() {
+  const fb = getRoasData('fb');
+  const goog = getRoasData('goog');
+  // Update inline avg rows
+  ['fb','goog'].forEach(p => {
+    const d = p === 'fb' ? fb : goog;
+    const sEl = document.getElementById(`${p}_avg_spend`);
+    const rEl = document.getElementById(`${p}_avg_roas`);
+    if (sEl) sEl.textContent = d.w_spend > 0 ? '€\u202f' + Math.round(d.w_spend).toLocaleString('nl-NL') : '–';
+    if (rEl) rEl.textContent = d.w_roas > 0 ? d.w_roas.toFixed(2) + 'x' : '–';
+  });
+  // Summary cards
+  const el = document.getElementById('roasAverages');
+  if (!el) return;
+  el.innerHTML = [
+    { title: 'Meta — gewogen gemiddelde', spend: fb.w_spend, roas: fb.w_roas, sub: fb.avg_roas_q > 0 ? `Laatste kwartaal: ${fb.avg_roas_q.toFixed(2)}x` : 'Geen kwartaaldata' },
+    { title: 'Google — gewogen gemiddelde', spend: goog.w_spend, roas: goog.w_roas, sub: goog.avg_roas_q > 0 ? `Laatste kwartaal: ${goog.avg_roas_q.toFixed(2)}x` : 'Geen kwartaaldata' },
+  ].map(c => `<div class="avg-card">
+    <div class="avg-title">${c.title}</div>
+    <div class="avg-val">${c.roas > 0 ? c.roas.toFixed(2) + 'x' : '–'} ROAS</div>
+    <div class="avg-sub">${c.spend > 0 ? '€\u202f' + Math.round(c.spend).toLocaleString('nl-NL') + '/mnd spend · ' : ''}${c.sub}</div>
+  </div>`).join('');
+  window._fb_data = fb;
+  window._goog_data = goog;
+}
+
+buildRoasTable('metaYearTable', 'fb');
+buildRoasTable('googleYearTable', 'goog');
+
 const PIN = '2025';
 
 function checkPin() {
@@ -387,11 +493,18 @@ document.getElementById('pinInput').addEventListener('keydown', e => { if(e.key=
 
 // ─── URL PREFILL ───────────────────────────────────────────────────
 function generateShareLink() {
-  const data = {
-    fb: gv('a_fb'), google: gv('a_google'),
-    roas_fb: gv('a_roas_fb'), roas_google: gv('a_roas_google')
-  };
-  const encoded = btoa(JSON.stringify(data));
+  const fbData = {}, googData = {};
+  MONTHS.forEach((m, i) => {
+    const fs = parseFloat(document.getElementById(`fb_spend_${i}`)?.value) || 0;
+    const fr = parseFloat(document.getElementById(`fb_roas_${i}`)?.value) || 0;
+    const gs = parseFloat(document.getElementById(`goog_spend_${i}`)?.value) || 0;
+    const gr = parseFloat(document.getElementById(`goog_roas_${i}`)?.value) || 0;
+    if (fs) fbData[`s${i}`] = fs;
+    if (fr) fbData[`r${i}`] = fr;
+    if (gs) googData[`s${i}`] = gs;
+    if (gr) googData[`r${i}`] = gr;
+  });
+  const encoded = btoa(JSON.stringify({ fb: fbData, goog: googData }));
   const url = window.location.href.split('?')[0] + '?d=' + encoded;
   const el = document.getElementById('shareUrl');
   el.textContent = url;
@@ -413,35 +526,46 @@ function loadFromUrl() {
   if (!d) return;
   try {
     const data = JSON.parse(atob(d));
-    if (data.fb) { setAndLock('m_fb', 'fb_display', data.fb); document.getElementById('a_fb').value = data.fb; }
-    if (data.google) { setAndLock('m_google', 'google_display', data.google); document.getElementById('a_google').value = data.google; }
-    if (data.roas_fb) document.getElementById('a_roas_fb').value = data.roas_fb;
-    if (data.roas_google) document.getElementById('a_roas_google').value = data.roas_google;
+    ['fb','goog'].forEach(p => {
+      const src = p === 'fb' ? data.fb : data.goog;
+      if (!src) return;
+      Object.entries(src).forEach(([k, v]) => {
+        const id = k[0] === 's' ? `${p}_spend_${k.slice(1)}` : `${p}_roas_${k.slice(1)}`;
+        const el = document.getElementById(id);
+        if (el) el.value = v;
+      });
+    });
+    updateRoasAverages();
   } catch(e) {}
 }
 
 function setAndLock(inputId, wrapId, value) {
   const input = document.getElementById(inputId);
+  if (!input) return;
   input.value = value;
   input.readOnly = true;
   const wrap = document.getElementById(wrapId);
-  wrap.innerHTML = `<div class="locked-field"><span style="font-size:12px;color:var(--text2)">€ ${parseFloat(value).toLocaleString('nl-NL')}</span><span class="lock-icon" title="Ingevuld door adviseur">🔒</span></div>`;
+  if (wrap) wrap.innerHTML = `<div class="locked-field"><span style="font-size:12px;color:var(--text2)">€ ${parseFloat(value).toLocaleString('nl-NL')}</span><span class="lock-icon" title="Ingevuld door adviseur">🔒</span></div>`;
 }
 
 function updateAdvisorLock() {}
 
-// Auto-load if URL has params (client opens shared link)
+// Auto-load if URL has params (client opens shared link — tables locked)
 window.addEventListener('load', () => {
   const params = new URLSearchParams(window.location.search);
   if (params.get('d')) {
     try {
       const data = JSON.parse(atob(params.get('d')));
-      if (data.fb) { setAndLock('m_fb', 'fb_display', data.fb); }
-      if (data.google) { setAndLock('m_google', 'google_display', data.google); }
-      if (data.roas_fb || data.roas_google) {
-        window._prefill_roas_fb = data.roas_fb || 0;
-        window._prefill_roas_google = data.roas_google || 0;
-      }
+      ['fb','goog'].forEach(p => {
+        const src = p === 'fb' ? data.fb : data.goog;
+        if (!src) return;
+        Object.entries(src).forEach(([k, v]) => {
+          const id = k[0] === 's' ? `${p}_spend_${k.slice(1)}` : `${p}_roas_${k.slice(1)}`;
+          const el = document.getElementById(id);
+          if (el) { el.value = v; el.readOnly = true; el.style.background = 'var(--bg2)'; el.style.color = 'var(--text2)'; }
+        });
+      });
+      updateRoasAverages();
       document.getElementById('advisorBar').style.display = 'none';
     } catch(e) {}
   }
@@ -466,6 +590,7 @@ function goPage(n) {
 
 // ─── MAIN CALCULATION ──────────────────────────────────────────────
 function berekenEnToon() {
+  updateRoasAverages();
   const bedrijf = document.getElementById('bedrijf').value || 'Bedrijf';
   const periode = document.getElementById('periode').value || 'Periode';
 
@@ -476,9 +601,10 @@ function berekenEnToon() {
   const k_dir = gv('k_variabel');
   const k_vast = gv('k_vast_totaal');
 
-  // Marketing — use locked values from URL or input fields
-  const mkt_fb = gv('m_fb');
-  const mkt_google = gv('m_google');
+  const r_fb = window._fb_data ? window._fb_data.w_roas : 0;
+  const r_google = window._goog_data ? window._goog_data.w_roas : 0;
+  const mkt_fb = window._fb_data && window._fb_data.w_spend > 0 ? window._fb_data.w_spend : gv('m_fb');
+  const mkt_google = window._goog_data && window._goog_data.w_spend > 0 ? window._goog_data.w_spend : gv('m_google');
   const mkt_paid = mkt_fb + mkt_google;
   const mkt_overig = gv('m_bureau') + gv('m_influencer') + gv('m_content') + gv('m_overig');
   const mkt_totaal = mkt_paid + mkt_overig;
@@ -511,8 +637,6 @@ function berekenEnToon() {
   const huidig_cpv = gem_bez > 0 ? mkt_totaal / gem_bez : 0;
   const huidig_cpv_paid = gem_bez > 0 ? mkt_paid / gem_bez : 0;
 
-  const r_fb = window._prefill_roas_fb || gv('a_roas_fb');
-  const r_google = window._prefill_roas_google || gv('a_roas_google');
   const be_roas_bruto = bruto_marge > 0 ? 1 / (bruto_marge / 100) : 0;
   const be_roas_netto = mkt_paid > 0 && omz > 0 ? (omz - k_dir - k_vast) / mkt_paid : 0;
 
@@ -679,8 +803,12 @@ function berekenEnToon() {
       ? [`ROAS (context — let op offline gap)`,
          `  Break-even ROAS bruto       ${be_roas_bruto > 0 ? fr(be_roas_bruto) : '–'}`,
          `  Break-even ROAS netto       ${be_roas_netto > 0 ? fr(be_roas_netto) : '–'}`,
-         r_fb > 0 ? `  Meta gerealiseerd           ${fr(r_fb)}  →  ${r_fb >= be_roas_netto ? 'WINSTGEVEND' : r_fb >= be_roas_bruto ? 'BREAK-EVEN' : 'VERLIESLATEND'}` : `  Meta gerealiseerd           niet ingevuld`,
-         r_google > 0 ? `  Google gerealiseerd         ${fr(r_google)}  →  ${r_google >= be_roas_netto ? 'WINSTGEVEND' : r_google >= be_roas_bruto ? 'BREAK-EVEN' : 'VERLIESLATEND'}` : `  Google gerealiseerd         niet ingevuld`,
+         `  Meta — jaargemiddelde       ${window._fb_data?.avg_roas_year > 0 ? fr(window._fb_data.avg_roas_year) : '–'}`,
+         `  Meta — laatste kwartaal     ${window._fb_data?.avg_roas_q > 0 ? fr(window._fb_data.avg_roas_q) : '–'}`,
+         `  Meta — gewogen gemiddelde   ${r_fb > 0 ? fr(r_fb) : '–'}  →  ${r_fb > 0 ? (r_fb >= be_roas_netto ? 'WINSTGEVEND' : r_fb >= be_roas_bruto ? 'BREAK-EVEN' : 'VERLIESLATEND') : '–'}`,
+         `  Google — jaargemiddelde     ${window._goog_data?.avg_roas_year > 0 ? fr(window._goog_data.avg_roas_year) : '–'}`,
+         `  Google — laatste kwartaal   ${window._goog_data?.avg_roas_q > 0 ? fr(window._goog_data.avg_roas_q) : '–'}`,
+         `  Google — gewogen gemiddelde ${r_google > 0 ? fr(r_google) : '–'}  →  ${r_google > 0 ? (r_google >= be_roas_netto ? 'WINSTGEVEND' : r_google >= be_roas_bruto ? 'BREAK-EVEN' : 'VERLIESLATEND') : '–'}`,
         ].join('\n')
       : `ROAS                          niet ingevuld`,
     ``,
